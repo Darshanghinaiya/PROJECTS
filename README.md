@@ -1,7 +1,7 @@
 # PROJECTS
 Multi-Language Code Repository
 
-Tech Stack: Html, Java, PHP, Python, JavaScript etc.
+Tech Stack: Html, Java, Python, JavaScript etc.
 
 Created and maintained a centralized repository containing programs and solutions across multiple programming languages.
 Implemented a wide range of concepts including data structures, algorithms, database queries, and problem-solving techniques.

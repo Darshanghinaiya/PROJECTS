@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Attendance Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+        :root {
+            --primary: #10b981;
+            --bg-dark: #111827;
+            --bg-card: #1f2937;
+            --text-light: #f9fafb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.4);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.5);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .attendance-toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .attendance-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ef4444;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "A";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #ef4444;
+        }
+
+        input:checked+.slider {
+            background-color: var(--primary);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+            content: "P";
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body class="p-4 sm:p-8">
+    <header class="text-center mb-6">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-emerald-400">Attendance Tracker</h1>
+    </header>
+    <div class="text-center mb-6 space-x-2">
+        <button onclick="chooseFile()"
+            class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg">
+            📂 Create / Select File
+        </button>
+        <button onclick="loadDataFromFile()"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+            🔄 Load Data
+        </button>
+        <button onclick="saveDataToFile()"
+            class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg">
+            💾 Save Data
+        </button>
+    </div>
+    <div class="max-w-3xl mx-auto flex space-x-4 mb-6 border-b border-gray-700 overflow-x-auto pb-1">
+        <button id="tab-courses" onclick="switchTab('courses')"
+            class="p-3 text-lg font-semibold text-gray-400 hover:text-emerald-300 whitespace-nowrap">Courses</button>
+        <button id="tab-students" onclick="switchTab('students')"
+            class="p-3 text-lg font-semibold text-gray-400 hover:text-emerald-300 whitespace-nowrap">Students</button>
+        <button id="tab-attendance" onclick="switchTab('attendance')"
+            class="p-3 text-lg font-semibold text-gray-400 hover:text-emerald-300 whitespace-nowrap">Mark
+            Attendance</button>
+        <button id="tab-reports" onclick="switchTab('reports')"
+            class="p-3 text-lg font-semibold text-gray-400 hover:text-emerald-300 whitespace-nowrap">Reports</button>
+    </div>
+    <main class="max-w-3xl mx-auto card p-6 sm:p-8 shadow-2xl">
+        <!-- Courses -->
+        <div id="courses" class="tab-content">
+            <h2 class="text-2xl font-bold mb-6 text-emerald-300">Add New Course</h2>
+            <form id="courseForm" class="space-y-4 mb-10">
+                <input id="newCourseName" placeholder="Course Name" required
+                    class="input-field w-full bg-gray-700 border border-gray-600 p-3 rounded-lg text-white">
+                <button type="submit"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg">Add
+                    Course</button>
+            </form>
+            <h2 class="text-2xl font-bold mb-4 text-emerald-300 border-b border-gray-700 pb-2">
+                Existing Courses (<span id="courseCount">0</span>)
+            </h2>
+            <div id="coursesList" class="space-y-3"></div>
+        </div>
+        <!-- Students  -->
+        <div id="students" class="tab-content">
+            <h2 class="text-2xl font-bold mb-6 text-emerald-300">Enroll New Student</h2>
+            <form id="studentForm" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+                <input id="newStudentRollNo" placeholder="Roll No / ID" required
+                    class="input-field sm:col-span-1 bg-gray-700 border border-gray-600 p-3 rounded-lg text-white">
+                <input id="newStudentName" placeholder="Student Full Name" required
+                    class="input-field sm:col-span-2 bg-gray-700 border border-gray-600 p-3 rounded-lg text-white">
+                <button type="submit"
+                    class="sm:col-span-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg">Enroll
+                    Student</button>
+            </form>
+            <h2 class="text-2xl font-bold mb-4 text-emerald-300 border-b border-gray-700 pb-2">
+                Enrolled Students (<span id="studentCount">0</span>)
+            </h2>
+            <div id="studentsList" class="space-y-3"></div>
+        </div>
+        <!-- Attendance  -->
+        <div id="attendance" class="tab-content">
+            <h2 class="text-2xl font-bold mb-6 text-emerald-300">Mark Lecture Attendance</h2>
+            <div class="mb-6">
+                <label class="block text-sm text-gray-400 mb-2">Select Course:</label>
+                <select id="courseSelectAttendance" onchange="renderAttendanceTaker()"
+                    class="input-field w-full bg-gray-700 border border-gray-600 p-3 rounded-lg text-white"></select>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm text-gray-400 mb-2">Select Date:</label>
+                <input type="date" id="attendanceDate" onchange="renderAttendanceTaker()"
+                    class="input-field w-full bg-gray-700 border border-gray-600 p-3 rounded-lg text-white">
+            </div>
+            <div id="attendanceTakerArea">
+                <p class="text-gray-400 p-4 border border-gray-700 rounded-lg">
+                    Please select a course and date to start marking attendance.
+                </p>
+            </div>
+        </div>
+        <!-- Reports  -->
+        <div id="reports" class="tab-content">
+            <h2 class="text-2xl font-bold mb-6 text-emerald-300">Attendance Reports</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Select Course:</label>
+                    <select id="courseSelectReport" onchange="renderReports()"
+                        class="input-field w-full bg-gray-700 border border-gray-600 p-3 rounded-lg text-white">
+                        <option value="all">All Courses</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Select Date (for single day attendance):</label>
+                    <input type="date" id="reportDate" onchange="renderReports()"
+                        class="input-field w-full bg-gray-700 border border-gray-600 p-3 rounded-lg text-white">
+                </div>
+            </div>
+            <div id="reportsArea">
+                <p class="text-gray-400 p-4 border border-gray-700 rounded-lg">
+                    Select a course or "All Courses" and optionally a date to view statistics.
+                </p>
+            </div>
+        </div>
+    </main>
+    <script>
+        let fileHandle = null;
+        let courses = [], students = [], attendance = [];
+
+        async function chooseFile() {
+            try {
+                fileHandle = await window.showSaveFilePicker({
+                    suggestedName: 'attendance_data.json',
+                    types: [{ description: 'JSON Files', accept: { 'application/json': ['.json'] } }]
+                });
+                await saveDataToFile();
+                alert('File created and initialized!');
+            } catch (err) { console.error('File selection cancelled', err); }
+        }
+
+        async function loadDataFromFile() {
+            try {
+                if (!fileHandle) {
+                    [fileHandle] = await window.showOpenFilePicker({
+                        types: [{ description: 'JSON Files', accept: { 'application/json': ['.json'] } }],
+                        excludeAcceptAllOption: true,
+                        multiple: false
+                    });
+                }
+                const file = await fileHandle.getFile();
+                const contents = await file.text();
+                const data = JSON.parse(contents);
+                courses = data.courses || [];
+                students = data.students || [];
+                attendance = data.attendance || [];
+                renderLists();
+                alert('Data loaded successfully!');
+            } catch (err) { console.error('Load failed:', err); }
+        }
+
+        async function saveDataToFile() {
+            if (!fileHandle) {
+                await chooseFile();
+                return;
+            }
+            const writable = await fileHandle.createWritable();
+            const data = { courses, students, attendance };
+            await writable.write(JSON.stringify(data, null, 2));
+            await writable.close();
+            console.log('Data saved to file.');
+        }
+
+        const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
+        let currentTab = 'courses';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.toggle('active', t.id === tab));
+            if (tab === 'attendance') { populateCourses('courseSelectAttendance'); renderAttendanceTaker(); }
+            if (tab === 'reports') { populateCourses('courseSelectReport'); renderReports(); }
+        }
+
+        function populateCourses(selectId) {
+            const sel = document.getElementById(selectId);
+            let options = selectId === 'courseSelectReport' ? '<option value="all">All Courses</option>' : '';
+            sel.innerHTML = options + courses.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+
+        // Add course
+        document.getElementById('courseForm').onsubmit = e => {
+            e.preventDefault();
+            const name = newCourseName.value.trim();
+            if (!name) return;
+            courses.push({ id: generateId(), name, totalLectures: 0 });
+            newCourseName.value = '';
+            renderLists();
+            saveDataToFile();
+        };
+
+        // Add student
+        document.getElementById('studentForm').onsubmit = e => {
+            e.preventDefault();
+            const roll = newStudentRollNo.value.trim().toUpperCase();
+            const name = newStudentName.value.trim();
+            if (!roll || !name) return;
+            if (students.some(s => s.rollNo === roll)) return alert('Roll No already exists!');
+            students.push({ id: generateId(), rollNo: roll, name });
+            newStudentRollNo.value = newStudentName.value = '';
+            renderLists();
+            saveDataToFile();
+        };
+
+        function deleteItem(id, type) {
+            if (type === 'course') {
+                courses = courses.filter(c => c.id !== id);
+                attendance = attendance.filter(a => a.courseId !== id);
+            } else {
+                students = students.filter(s => s.id !== id);
+                attendance = attendance.filter(a => a.studentId !== id);
+            }
+            renderLists();
+            if (currentTab === 'reports') renderReports();
+            saveDataToFile();
+        }
+
+        function renderLists() {
+            coursesList.innerHTML = courses.length ?
+                courses.map(c => `
+         <div class="flex justify-between items-center bg-gray-700 p-4 rounded-lg">
+           <div><p class="font-semibold">${c.name}</p><p class="text-sm text-gray-400">Lectures: ${c.totalLectures}</p></div>
+           <button onclick="deleteItem('${c.id}','course')" class="text-red-400 hover:text-red-300">🗑</button>
+         </div>`).join('') : `<p class="text-gray-400">No courses.</p>`;
+
+            studentsList.innerHTML = students.length ?
+                students.map(s => `
+         <div class="flex justify-between items-center bg-gray-700 p-4 rounded-lg">
+           <div><p class="font-semibold">${s.name}</p><p class="text-sm text-gray-400">Roll: ${s.rollNo}</p></div>
+           <button onclick="deleteItem('${s.id}','student')" class="text-red-400 hover:text-red-300">🗑</button>
+         </div>`).join('') : `<p class="text-gray-400">No students.</p>`;
+
+            courseCount.textContent = courses.length;
+            studentCount.textContent = students.length;
+        }
+
+        function renderAttendanceTaker() {
+            const courseId = courseSelectAttendance.value;
+            const date = attendanceDate.value;
+            const area = attendanceTakerArea;
+            if (!courseId || !date || students.length === 0)
+                return area.innerHTML = `<p class="text-gray-400 p-4 border border-gray-700 rounded-lg">Select a course, date, and ensure students exist.</p>`;
+            if (attendance.some(a => a.courseId === courseId && a.date === date))
+                return area.innerHTML = `<div class="p-4 border border-blue-700 bg-blue-900 rounded-lg">Attendance already taken for this date.</div>`;
+
+            area.innerHTML = students.map(s => `
+         <div class="flex justify-between items-center bg-gray-700 p-3 rounded-lg mb-2">
+           <div><p>${s.name}</p><p class="text-sm text-gray-400">${s.rollNo}</p></div>
+           <label class="attendance-toggle"><input type="checkbox" data-id="${s.id}"><span class="slider"></span></label>
+         </div>`).join('') +
+                `<button onclick="saveAttendance('${courseId}','${date}')" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold">Save Attendance</button>`;
+        }
+
+        function saveAttendance(courseId, date) {
+            const course = courses.find(c => c.id === courseId);
+            const records = Array.from(document.querySelectorAll('.attendance-toggle input')).map(cb => ({
+                courseId, studentId: cb.dataset.id, date, status: cb.checked ? 'P' : 'A'
+            }));
+            attendance.push(...records);
+            course.totalLectures++;
+            renderLists();
+            renderAttendanceTaker();
+            renderReports();
+            saveDataToFile();
+        }
+
+        function renderReports() {
+            const cid = courseSelectReport.value;
+            const date = reportDate.value;
+            const area = reportsArea;
+            if (students.length === 0) return area.innerHTML = `<p class="text-gray-400">No students or data.</p>`;
+            let filtered = attendance.filter(a => (cid === 'all' || a.courseId === cid) && (!date || a.date === date));
+            const stats = students.map(s => {
+                const recs = filtered.filter(a => a.studentId === s.id);
+                const present = recs.filter(a => a.status === 'P').length;
+                const total = recs.length || (cid === 'all' ? courses.reduce((sum, c) => sum + c.totalLectures, 0) : (courses.find(c => c.id === cid)?.totalLectures || 0));
+                return { ...s, present, absent: total - present, percentage: total ? Math.round((present / total) * 100) : 0 };
+            });
+
+            area.innerHTML = `
+         <h3 class="text-xl font-semibold mb-4 text-emerald-400">${cid === 'all' ? 'All Courses' : courses.find(c => c.id === cid)?.name || ''} ${date ? `(${date})` : ''}</h3>
+         <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
+           <thead class="bg-gray-700 text-gray-300"><tr><th class="py-2 px-3">Roll</th><th>Name</th><th>P</th><th>A</th><th>%</th></tr></thead>
+           <tbody>${stats.map(r => `<tr class="text-center border-b border-gray-700">
+             <td class="py-2 px-3">${r.rollNo}</td><td>${r.name}</td><td>${r.present}</td><td>${r.absent}</td>
+             <td class="${r.percentage < 75 ? 'text-red-400' : 'text-emerald-400'} font-bold">${r.percentage}%</td></tr>`).join('')}</tbody>
+         </table>`;
+        }
+
+        switchTab('courses');
+    </script>
+</body>
+
+</html>
